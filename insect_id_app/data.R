@@ -35,6 +35,9 @@ tuboids_dt <- function(state, input){
 annotation_dt <- function(state, input){
   t <- state$updaters$db_fetch_time
   root_dir <- state$config$DATA_ROOT_DIR
+  if(!dir.exists(root_dir))
+    stop(sprintf("root dir %s does not exist", root_dir))
+  
   db_path <- file.path(root_dir, 'database.db')
   con <- dbConnect(RSQLite::SQLite(), db_path)
     on.exit(dbDisconnect(con))
@@ -49,7 +52,7 @@ annotation_dt <- function(state, input){
                      extra=character(),
                      confidence=numeric(),
                      notes = character(),
-                     datetime=as.POSIXct(numeric())
+                     datetime=as.POSIXct(numeric(), origin='1970-01-01')
     )
     dbCreateTable(con, 'ANNOTATIONS', dt)
   }
@@ -78,6 +81,8 @@ add_new_annotation <- function(state, input){
                    notes = state$choice$notes,
                    datetime=Sys.time())
   root_dir <- state$config$DATA_ROOT_DIR
+  if(!dir.exists(root_dir))
+    stop(sprintf("root dir %s does not exist", root_dir))
   db_path <- file.path(root_dir, 'database.db')
   con <- dbConnect(RSQLite::SQLite(), db_path)
   on.exit(dbDisconnect(con))

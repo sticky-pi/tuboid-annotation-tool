@@ -2,20 +2,10 @@ rm(list=ls())
 library(shiny)
 library(shiny.router)
 library(DT)
-library(shinyjs)
-library(sodium)
 library(RSQLite)
-library(httr)
-library(lubridate)
 library(data.table)
-library(ggplot2)
-library(htmlwidgets)
-library(fasttime)
-library(zoo)
 library(jsonlite)
-library(gridExtra) # 
-library(grid)
-library(shinyBS)
+library(shinythemes)
 # 
 
 source("login.R")
@@ -139,9 +129,8 @@ server <- function(input, output, session) {
           })
     context <- renderImage({list(src = all_imgs$context,
                       contentType = 'image/jpg',
-                      width = "800",
-                      height = "600",
-                      alt = all_imgs$context)}, deleteFile = FALSE, outputArgs =list(width = "800px", height = "600px"))
+                      class='img-responsive',
+                      alt = all_imgs$context)}, deleteFile = FALSE)
       
     return(list(
               column(width=6,context), 
@@ -150,7 +139,10 @@ server <- function(input, output, session) {
   })
   output$secured_ui <- renderUI({
     if (state$user$is_logged_in == TRUE ) {
-      shinyUI(fluidPage(theme = "style.css",
+      shinyUI(fluidPage(theme = shinytheme("journal"),
+                        tags$head(
+                          tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+                        ),
                         router_ui()
       ))
     }
