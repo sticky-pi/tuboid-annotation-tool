@@ -8,3 +8,14 @@
 .container-fluid{
   margin:16px;
 }
+
+
+#preloader {
+	position: absolute;
+	left: -9999px;
+	top:  -9999px;
+	}
+#preloader img {
+	display: block;
+	}
+	

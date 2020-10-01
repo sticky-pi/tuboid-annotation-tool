@@ -131,15 +131,15 @@ server <- function(input, output, session) {
     # we can pre fetch and let the browser cache the next batch of images
     all_imgs_next_tub = get_all_images_for_tuboid(state, tub_dt[tuboid_id==next_tuboid, tuboid_dir])
     o_next = lapply(all_imgs_next_tub$tuboid, function(x){
-      tags$img(src=x)
+      tags$img(src=x, width="1", height="1")
     })
-    context_next = tags$img(src=all_imgs_next_tub$context)    
+    context_next = tags$img(src=all_imgs_next_tub$context,  width="1", height="1")    
     
     
     return(list(
               column(width=6,context), 
               column(width=3, id='tuboid_shots', o),
-              hidden(div(o_next, context_next))
+              div(id='preloader', o_next, context_next)
           ))
   })
   output$secured_ui <- renderUI({
