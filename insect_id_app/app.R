@@ -1,5 +1,6 @@
 rm(list=ls())
 library(shiny)
+library(shinyjs)
 library(shiny.router)
 library(DT)
 library(RSQLite)
@@ -120,26 +121,31 @@ server <- function(input, output, session) {
       
     
     all_imgs = get_all_images_for_tuboid(state, tub_dt[tuboid_id==tub_id, tuboid_dir])
+    
+    
     o = lapply(all_imgs$tuboid, function(x){
-      renderImage({list(src = x,
-                            contentType = 'image/jpg',
-                            width = 256,
-                            height = 256,
-                            alt = x)}, deleteFile = FALSE, outputArgs = list(width = "auto", height = "auto"))
+            tags$img(src=x, width=200, height=200, alt=x)
           })
-    context <- renderImage({list(src = all_imgs$context,
-                      contentType = 'image/jpg',
-                      class='img-responsive',
-                      alt = all_imgs$context)}, deleteFile = FALSE)
-      
+    context = tags$img(src=all_imgs$context, class='img-responsive', alt=all_imgs$context)    
+  
+    # we can pre fetch and let the browser cache the next batch of images
+    all_imgs_next_tub = get_all_images_for_tuboid(state, tub_dt[tuboid_id==next_tuboid, tuboid_dir])
+    o_next = lapply(all_imgs_next_tub$tuboid, function(x){
+      tags$img(src=x)
+    })
+    context_next = tags$img(src=all_imgs_next_tub$context)    
+    
+    
     return(list(
               column(width=6,context), 
-              column(width=3, id='tuboid_shots', o)           
+              column(width=3, id='tuboid_shots', o),
+              hidden(div(o_next, context_next))
           ))
   })
   output$secured_ui <- renderUI({
     if (state$user$is_logged_in == TRUE ) {
       shinyUI(fluidPage(theme = shinytheme("journal"),
+                        useShinyjs(),
                         tags$head(
                           tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
                         ),

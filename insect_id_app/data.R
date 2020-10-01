@@ -16,7 +16,6 @@ get_next_to_annotate <- function(state, input){
 }
 tuboids_dt <- function(state, input){
     root_dir <- state$config$DATA_ROOT_DIR
-    
     all_dirs <- sort(list.dirs(root_dir,recursive = TRUE, full.names = FALSE))
     paths <- sapply(all_dirs, function(x){
       o <- split_path(x)
@@ -61,11 +60,12 @@ annotation_dt <- function(state, input){
   dt
 }
 
-get_all_images_for_tuboid <- function(state, tuboid_dir){
-  tuboid_dir <- file.path(state$config$DATA_ROOT_DIR, tuboid_dir)
-  tuboid_shots <- sort(list.files(tuboid_dir, pattern = "tub\\..*\\.jpg",full.names = TRUE))
-  context_image <- list.files(tuboid_dir, pattern = "context.jpg", full.names = TRUE)
-  list(tuboid = tuboid_shots, context = context_image)
+get_all_images_for_tuboid <- function(state, tuboid_subdir){
+  tuboid_dir <- file.path(state$config$DATA_ROOT_DIR, tuboid_subdir)
+  tuboid_shots <- sort(list.files(tuboid_dir, pattern = "tub\\..*\\.jpg",full.names = FALSE))
+  context_image <- list.files(tuboid_dir, pattern = "context.jpg", full.names = FALSE)
+  # path in www (to be served) www is mapped to `tuboid_dir` through symlink
+  list(tuboid = file.path('' ,tuboid_subdir, tuboid_shots), context = file.path('', tuboid_subdir,context_image))
 }
 
 add_new_annotation <- function(state, input){

@@ -38,7 +38,9 @@ RUN  chmod 700  /usr/bin/shiny-server.sh
 
 RUN mkdir /opt/data_root_dir &&  chown shiny /opt/data_root_dir
 VOLUME /opt/data_root_dir
+
 COPY insect_id_app /srv/shiny-server/insect_id_app
+RUN ln -s /opt/data_root_dir/tuboids /srv/shiny-server/insect_id_app/www/tuboids
 
 # Make the ShinyApp available at port 80
 EXPOSE 80
