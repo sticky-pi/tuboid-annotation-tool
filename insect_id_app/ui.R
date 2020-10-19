@@ -2,9 +2,12 @@
 home_page <- div(
 
   fluidRow(
-    # column(width = 8,
-      uiOutput("tuboid_page"),
-      # ),
+    column(width = 4,
+           uiOutput("context_img")
+    ),
+    column(width = 5,
+           uiOutput("tuboid_shots")
+    ),
     column(width = 3, 
       
       uiOutput("search_type"),

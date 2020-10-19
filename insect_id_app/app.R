@@ -109,8 +109,7 @@ server <- function(input, output, session) {
   })
   
   output$next_url <- renderUI({h3(tags$a(href=state$user$next_tuboid_url, 'Skip'))})
-  output$tuboid_page <- renderUI({
-    
+  tub_imgs <- reactive({
     tub_id = component()
     state$user$current_tuboid_id <- tub_id
     tub_dt = get_comp_prop(state, tuboids_dt)
@@ -118,30 +117,47 @@ server <- function(input, output, session) {
     state$user$next_tuboid_url <- sprintf("?tub_id=%s#!/",next_tuboid)
     if(is.null(tub_dt) | !tub_id %in% tub_dt[, tuboid_id])
       change_page(state$user$next_tuboid_url)
-      
-    
     all_imgs = get_all_images_for_tuboid(state, tub_dt[tuboid_id==tub_id, tuboid_dir])
-    
-    
-    o = lapply(all_imgs$tuboid, function(x){
-            tags$img(src=x, width=200, height=200, alt=x)
-          })
-    context = tags$img(src=all_imgs$context, class='img-responsive', alt=all_imgs$context)    
-  
-    # we can pre fetch and let the browser cache the next batch of images
     all_imgs_next_tub = get_all_images_for_tuboid(state, tub_dt[tuboid_id==next_tuboid, tuboid_dir])
-    o_next = lapply(all_imgs_next_tub$tuboid, function(x){
-      tags$img(src=x, width="1", height="1")
-    })
-    context_next = tags$img(src=all_imgs_next_tub$context,  width="1", height="1")    
+    list(current=all_imgs, nextt=all_imgs_next_tub)
+  })
+  
+  output$tuboid_shots <- renderUI({
+    all_imgs_cur_next = tub_imgs()
+    all_imgs <- all_imgs_cur_next$current
+    all_imgs_next_tub = all_imgs_cur_next$nextt
     
+    context = tags$img(src=all_imgs$context, class='img-responsive', alt=all_imgs$context)    
+    tub = tags$img(src=all_imgs$tuboid, class='img-responsive', alt=all_imgs$tuboid, width=800, height=800)
+    # we can pre fetch and let the browser cache the next batch of images
+    context_next = tags$img(src=all_imgs_next_tub$context,  width="1", height="1")    
+    tub_next = tags$img(src=all_imgs_next_tub$tuboid, class='img-responsive', alt=all_imgs_next_tub$tuboid, width=1, height=1)
     
     return(list(
-              column(width=6,context), 
-              column(width=3, id='tuboid_shots', o),
-              div(id='preloader', o_next, context_next)
+              tub,
+              div(id='preloader', tub_next)
           ))
   })
+  output$context_img <- renderUI({
+    all_imgs_cur_next = tub_imgs()
+    all_imgs <- all_imgs_cur_next$current
+    all_imgs_next_tub = all_imgs_cur_next$nextt
+    
+    context = tags$img(src=all_imgs$context, class='img-responsive', alt=all_imgs$context)    
+    tub = tags$img(src=all_imgs$tuboid, class='img-responsive', alt=all_imgs$tuboid, width=800, height=800)
+    # we can pre fetch and let the browser cache the next batch of images
+    context_next = tags$img(src=all_imgs_next_tub$context,  width="1", height="1")    
+    tub_next = tags$img(src=all_imgs_next_tub$tuboid, class='img-responsive', alt=all_imgs_next_tub$tuboid, width=1, height=1)
+    
+    return(list(
+      context,
+      div(id='preloader', context_next)
+    ))
+  })
+  
+  
+  
+  
   output$secured_ui <- renderUI({
     if (state$user$is_logged_in == TRUE ) {
       shinyUI(fluidPage(theme = shinytheme("journal"),

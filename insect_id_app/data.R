@@ -5,6 +5,7 @@ split_path <- function(x) if (dirname(x)==x) x else c(basename(x),split_path(dir
 get_next_to_annotate <- function(state, input){
   ann_dt <- get_comp_prop(state, annotation_dt)
   tub_dt <- get_comp_prop(state, tuboids_dt)
+  
   n_dt <- ann_dt[, .(n_annots =.N), keyby=tuboid_id]
   
   n_dt <- rbind( n_dt, tub_dt[! tuboid_id %in% n_dt$tuboid_id, .(tuboid_id=tuboid_id,n_annots=0)])
@@ -62,7 +63,7 @@ annotation_dt <- function(state, input){
 
 get_all_images_for_tuboid <- function(state, tuboid_subdir){
   tuboid_dir <- file.path(state$config$DATA_ROOT_DIR, tuboid_subdir)
-  tuboid_shots <- sort(list.files(tuboid_dir, pattern = "tub\\..*\\.jpg",full.names = FALSE))
+  tuboid_shots <- list.files(tuboid_dir, pattern = "tuboid.jpg",full.names = FALSE)
   context_image <- list.files(tuboid_dir, pattern = "context.jpg", full.names = FALSE)
   # path in www (to be served) www is mapped to `tuboid_dir` through symlink
   list(tuboid = file.path('' ,tuboid_subdir, tuboid_shots), context = file.path('', tuboid_subdir,context_image))
@@ -86,7 +87,6 @@ add_new_annotation <- function(state, input){
   db_path <- file.path(root_dir, 'database.db')
   con <- dbConnect(RSQLite::SQLite(), db_path)
   on.exit(dbDisconnect(con))
-  print(d)
   dbAppendTable(con, 'ANNOTATIONS', d)
   state$updaters$db_fetch_time <- Sys.time()
   change_page(state$user$next_tuboid_url)
