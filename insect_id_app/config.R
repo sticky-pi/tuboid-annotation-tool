@@ -13,7 +13,8 @@ config_vars <- list(MYSQL_DATABASE = NA,
                  STICKY_PI_TESTING_PASSWORD = NA, 
                  STICKY_PI_TESTING_RSHINY_AUTOLOGIN = FALSE, 
                  STICKY_PI_TESTING_RSHINY_BYPASS_LOGGIN = FALSE, 
-                 DATA_ROOT_DIR = NA)
+                 DATA_ROOT_DIR = NA,
+                 S3_BUCKET = NA)
 
 get_config<- function(){
     out <- config_vars

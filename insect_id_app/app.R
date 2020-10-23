@@ -117,8 +117,8 @@ server <- function(input, output, session) {
     state$user$next_tuboid_url <- sprintf("?tub_id=%s#!/",next_tuboid)
     if(is.null(tub_dt) | !tub_id %in% tub_dt[, tuboid_id])
       change_page(state$user$next_tuboid_url)
-    all_imgs = get_all_images_for_tuboid(state, tub_dt[tuboid_id==tub_id, tuboid_dir])
-    all_imgs_next_tub = get_all_images_for_tuboid(state, tub_dt[tuboid_id==next_tuboid, tuboid_dir])
+    all_imgs = get_all_image_urls_for_tuboid(state, tub_dt[tuboid_id==tub_id, tuboid_dir])
+    all_imgs_next_tub = get_all_image_urls_for_tuboid(state, tub_dt[tuboid_id==next_tuboid, tuboid_dir])
     list(current=all_imgs, nextt=all_imgs_next_tub)
   })
   
