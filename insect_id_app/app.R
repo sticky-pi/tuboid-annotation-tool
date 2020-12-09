@@ -71,8 +71,6 @@ server <- function(input, output, session) {
     if(nrow(candidate) == 1)
       if(isTruthy(candidate[[level]]))
         preselected <- candidate[[level]]
-    
-    
     selectizeInput(inputId = paste0('search_', level),
                    label = level,
                    choices = choices,
@@ -85,16 +83,14 @@ server <- function(input, output, session) {
     output[[paste0('search_',l)]] <- renderUI({ make_selectize(l)})
     }, levels)
 
-  output$id_selected <- renderUI(
-    {
+  output$id_selected <- renderUI({
       id_names <- c(input$search_type, input$search_order, input$search_family, 
                     input$search_genus, input$search_species, input$search_extra)
       
     o = lapply(id_names, function(x) {
       link <- sprintf("https://en.wikipedia.org/w/index.php?search=%s", x)
       tags$a(x, href=link, target="_blank")
-      }
-      )
+      })
     div(o)
     }
   )
@@ -109,20 +105,6 @@ server <- function(input, output, session) {
       state$choice[[l]] <- input[[paste0('search_',l)]]}
     )
   }, levels)
-  
-  # Map(function(l){
-  #   observeEvent(state$user$current_tuboid_id, {
-  #     candidates_dt = get_comp_prop(state, candidates_dt)
-  #     candidate = candidates_dt[tuboid_id == state$user$current_tuboid_id,]
-  #     warning('candidate')
-  #     if(nrow(candidate) == 1)
-  #       if(isTruthy(candidate[[l]]))
-  #         state$choice[[l]] <- candidate[[l]]
-  #       else
-  #         state$choice[[l]] <- NULL
-  #   }
-  #   )
-  # }, levels)
   
   output$button_submit <- renderUI({
     actionButton("button_submit", "Submit")
