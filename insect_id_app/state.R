@@ -27,8 +27,6 @@ make_state <- function(input, config){
   
 }
 
-
-
 set_comp_prop <- function(state, foo){
   #fixme won't work for anonymouse methods etc
   method_name <- deparse(substitute(foo))

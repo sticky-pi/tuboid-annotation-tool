@@ -1,6 +1,4 @@
-
 split_path <- function(x) if (dirname(x)==x) x else c(basename(x),split_path(dirname(x)))
-
 
 get_next_to_annotate <- function(state, input){
   ann_dt <- get_comp_prop(state, annotation_dt)
@@ -16,20 +14,6 @@ get_next_to_annotate <- function(state, input){
   sample(n_dt[,tuboid_id], 1)
 }
 
-make_index <- function(result_dir){
-    all_dirs <- sort(list.dirs(root_dir,recursive = TRUE, full.names = FALSE))
-    paths <- sapply(all_dirs, function(x){
-      o <- split_path(x)
-      if(length(o) == 3)
-        return(o[1])
-      else
-        return(NA)
-      })
-    paths <- paths[!is.na(paths)]
-    dt <- data.table::data.table(tuboid_id=paths, tuboid_dir=names(paths))
-    fwrite(dt, file.path(result_dir, 'index.csv'))
-}
-
 get_s3_url <- function(bucket, file, duration=3600){
   s3_path = sprintf('s3://%s/%s', bucket, file)
   link = system2('s3cmd', args=list('signurl', s3_path, sprintf('+%i', duration)), stdout=TRUE)
@@ -41,28 +25,19 @@ tuboids_dt <- function(state, input){
    tuboid_dir: [08038ade.2020-06-24_22-00-00.2020-07-01_12-00-00/08038ade.2020-06-24_22-00-00.2020-07-01_12-00-00.0000, ...]
   "
   bucket <- state$config$S3_BUCKET
-  url <- get_s3_url(bucket, 'tuboids/index.csv')
+  url <- get_s3_url(bucket, 'index.csv')
   dt <- data.table::fread(url)
   setkey(dt, tuboid_id)
   dt
 }
 
-# 
-# tuboids_dt <- function(state, input){
-#   root_dir <- state$config$DATA_ROOT_DIR
-#   all_dirs <- sort(list.dirs(root_dir,recursive = TRUE, full.names = FALSE))
-#   paths <- sapply(all_dirs, function(x){
-#     o <- split_path(x)
-#     if(length(o) == 4)
-#       return(o[1])
-#     else
-#       return(NA)
-#   })
-#   paths <- paths[!is.na(paths)]
-#   dt <- data.table::data.table(tuboid_id=paths, tuboid_dir=names(paths))
-#   setkey(dt, tuboid_id)
-#   dt
-# }
+candidates_dt <- function(state, input){
+  bucket <- state$config$S3_BUCKET
+  url <- get_s3_url(bucket, 'candidate_labels.csv')
+  dt <- data.table::fread(url)
+  setkey(dt, tuboid_id)
+  dt
+}
 
 annotation_dt <- function(state, input){
   t <- state$updaters$db_fetch_time
@@ -94,12 +69,9 @@ annotation_dt <- function(state, input){
 }
 
 get_all_image_urls_for_tuboid <- function(state, tuboid_dir){
-  # tuboid_dir <- file.path(state$config$DATA_ROOT_DIR, tuboid_subdir)
-  # tuboid_shots <- list.files(tuboid_dir, pattern = "tuboid.jpg",full.names = FALSE)
-  # context_image <- list.files(tuboid_dir, pattern = "context.jpg", full.names = FALSE)
   bucket <- state$config$S3_BUCKET
-  context_image <- get_s3_url(bucket, paste('tuboids', tuboid_dir, 'context.jpg', sep='/'))
-  tuboid_image <- get_s3_url(bucket, paste('tuboids', tuboid_dir, 'tuboid.jpg', sep='/'))
+  context_image <- get_s3_url(bucket, paste(tuboid_dir, 'context.jpg', sep='/'))
+  tuboid_image <- get_s3_url(bucket, paste( tuboid_dir, 'tuboid.jpg', sep='/'))
   # path in www (to be served) www is mapped to `tuboid_dir` through symlink
   list(tuboid = tuboid_image, context = context_image)
 }

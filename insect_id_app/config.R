@@ -1,7 +1,7 @@
 CONFIG_ENV_FILE <- '/home/shiny/env.R'
 
 # The default config . typically for testing offline with rstudio (no api)
-# these are overwritten with environement variables in API testing and production
+# these are overwritten with environment variables in API testing and production
 config_vars <- list(MYSQL_DATABASE = NA, 
                  MYSQL_READER = NA,
                  MYSQL_SERVER_IP = NA,

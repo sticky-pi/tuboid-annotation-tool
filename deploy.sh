@@ -1,19 +1,9 @@
-# build taxonomy  using  pull_taxonomy.py
-
 VERSION=3.0
 
-# should exist and have files: credentials.json, taxonomy.json (see above), and tuboids/
-#
-# e.g in 
-# ==============
-# {
-#   "USER":"PASSWORD"
-# }
-
 # tuboids is created by sticky_pi (ml_trainer/)
-LOCAL_VOLUME=/opt/insect_annotation_volume
+LOCAL_VOLUME=/opt/tuboid_annotation_volume
 
-# should be open to the world
+# should be open to the world (e.g via nginx)
 PORT=8099
 
 S3_BUCKET='sticky-pi-insect-tuboid-classifier-raw-images'

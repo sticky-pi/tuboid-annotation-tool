@@ -7,7 +7,6 @@ library(RSQLite)
 library(data.table)
 library(jsonlite)
 library(shinythemes)
-# 
 
 source("login.R")
 source("ui.R")
@@ -21,15 +20,16 @@ router <- make_router(
 )
 
 server <- function(input, output, session) {
-  router(input, output, session)
+  router$server(input, output, session)
   config <- get_config()
   state <- make_state(input, config)
   state <- set_comp_prop(state, tuboids_dt)
+  state <- set_comp_prop(state, candidates_dt)
   state <- set_comp_prop(state, annotation_dt)
   
   levels=phylo_make_levels()
-  
-  tree = phylo_make_tree(isolate(file.path(state$config$DATA_ROOT_DIR, 'taxonomy.json')))
+
+  tree = phylo_make_tree(isolate(state$config$S3_BUCKET))
   observe({login_fun(state, input)})
   
   output$tuboids_table <- DT::renderDataTable(get_comp_prop(state, tuboids_dt))
@@ -53,8 +53,10 @@ server <- function(input, output, session) {
     parent_level = levels[parent_level_id]
     choices = NULL
     
+    #tree root here
     if(length(parent_level) ==0)
       choices = names(tree)
+    
     else if(!is.null(state$choice[[parent_level]])){
       sub_tree = tree
       for(l in levels[1:parent_level_id]){
@@ -63,10 +65,18 @@ server <- function(input, output, session) {
       choices = c("",names(sub_tree))
     }
     
+    candidates_dt = get_comp_prop(state, candidates_dt)
+    candidate = candidates_dt[tuboid_id == state$user$current_tuboid_id,]
+    preselected <- NULL
+    if(nrow(candidate) == 1)
+      if(isTruthy(candidate[[level]]))
+        preselected <- candidate[[level]]
+    
+    
     selectizeInput(inputId = paste0('search_', level),
                    label = level,
                    choices = choices,
-                   selected = NULL,
+                   selected = preselected,
                    multiple = FALSE,
                    options = list(create = FALSE)) # if TRUE, allows newly created inputs
   }
@@ -77,7 +87,8 @@ server <- function(input, output, session) {
 
   output$id_selected <- renderUI(
     {
-      id_names <- c(input$search_type, input$search_order, input$search_family, input$search_genus, input$search_species, input$search_extra)
+      id_names <- c(input$search_type, input$search_order, input$search_family, 
+                    input$search_genus, input$search_species, input$search_extra)
       
     o = lapply(id_names, function(x) {
       link <- sprintf("https://en.wikipedia.org/w/index.php?search=%s", x)
@@ -89,26 +100,40 @@ server <- function(input, output, session) {
   )
   
   observeEvent(input$button_submit, {
-    add_new_annotation(state, input)}
-  )
+    add_new_annotation(state, input)})
   
-  observeEvent(input$button_skip, {
-    change_page(state$user$next_tuboid_url)}
-  )
+  observeEvent(input$button_skip, {change_page(state$user$next_tuboid_url)})
   
   Map(function(l){
     observeEvent(input[[paste0('search_',l)]], {
       state$choice[[l]] <- input[[paste0('search_',l)]]}
     )
   }, levels)
+  
+  # Map(function(l){
+  #   observeEvent(state$user$current_tuboid_id, {
+  #     candidates_dt = get_comp_prop(state, candidates_dt)
+  #     candidate = candidates_dt[tuboid_id == state$user$current_tuboid_id,]
+  #     warning('candidate')
+  #     if(nrow(candidate) == 1)
+  #       if(isTruthy(candidate[[l]]))
+  #         state$choice[[l]] <- candidate[[l]]
+  #       else
+  #         state$choice[[l]] <- NULL
+  #   }
+  #   )
+  # }, levels)
+  
   output$button_submit <- renderUI({
     actionButton("button_submit", "Submit")
   })
+  
   output$button_skip <- renderUI({
     actionButton("button_skip", "Skip")
   })
   
   output$next_url <- renderUI({h3(tags$a(href=state$user$next_tuboid_url, 'Skip'))})
+  
   tub_imgs <- reactive({
     tub_id = component()
     state$user$current_tuboid_id <- tub_id
@@ -138,6 +163,7 @@ server <- function(input, output, session) {
               div(id='preloader', tub_next)
           ))
   })
+  
   output$context_img <- renderUI({
     all_imgs_cur_next = tub_imgs()
     all_imgs <- all_imgs_cur_next$current
@@ -155,9 +181,6 @@ server <- function(input, output, session) {
     ))
   })
   
-  
-  
-  
   output$secured_ui <- renderUI({
     if (state$user$is_logged_in == TRUE ) {
       shinyUI(fluidPage(theme = shinytheme("journal"),
@@ -165,7 +188,7 @@ server <- function(input, output, session) {
                         tags$head(
                           tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
                         ),
-                        router_ui()
+                        router$ui
       ))
     }
     else {

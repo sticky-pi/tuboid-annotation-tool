@@ -27,25 +27,26 @@ RUN wget --no-verbose https://download3.rstudio.org/ubuntu-14.04/x86_64/VERSION 
     chown shiny:shiny /var/lib/shiny-server
 
 # Install R deps
-RUN R -e "install.packages(c('DT',  'RSQLite', 'data.table', 'jsonlite', 'shiny.router', 'shinyjs', 'shinythemes'), repos='http://cran.rstudio.com/')"
-
+RUN R -e "install.packages(c('DT',  'RSQLite', 'data.table', 'jsonlite', 'shiny.router', 'shinyjs', 'shinythemes', 'curl'), repos='http://cran.rstudio.com/')"
 
 RUN apt-get install python-pip -y && pip install s3cmd 
 
+ARG SHINY_UID
+ENV SHINY_UID=$SHINY_UID
+RUN usermod -u $SHINY_UID shiny
 # Copy configuration files into the Docker image
 COPY shiny-server.conf  /etc/shiny-server/shiny-server.conf
 # Copy further configuration files into the Docker image
 COPY shiny-server.sh /usr/bin/shiny-server.sh
 RUN  chmod 700  /usr/bin/shiny-server.sh
 
-RUN mkdir /opt/data_root_dir &&  chown shiny /opt/data_root_dir
-VOLUME /opt/data_root_dir
-
 
 COPY insect_id_app /srv/shiny-server/insect_id_app
 COPY .secret_s3cmd_conf /home/shiny/.s3cfg
 RUN chown shiny.shiny /home/shiny/.s3cfg
-#RUN ln -s /opt/data_root_dir/tuboids /srv/shiny-server/insect_id_app/www/tuboids
+
+RUN mkdir /opt/data_root_dir &&  chown shiny /opt/data_root_dir
+VOLUME /opt/data_root_dir
 
 # Make the ShinyApp available at port 80
 EXPOSE 80
