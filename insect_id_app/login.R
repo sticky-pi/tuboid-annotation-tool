@@ -44,30 +44,22 @@ login_fun <- function(state, input){
           if(no_password_test){
             state$user$is_logged_in <- TRUE
             state$user$username <- "MOCK USER"
+            state$user$allow_write <- TRUE
             }
             
-          # if STICKY_PI_TESTING_USER is defined at runtime of container, it logs in directly
-            else if(state$config$STICKY_PI_TESTING_RSHINY_AUTOLOGIN){
-                token <- api_verify_passwd(state, state$config$STICKY_PI_TESTING_USER, state$config$STICKY_PI_TESTING_PASSWORD)
-                if(token != ""){
-                  state$user$auth_token <- token
-                  state$user$is_logged_in <- TRUE
-                  state$user$username <- state$config$STICKY_PI_TESTING_USER
-                  
-                }
-              }
 
           else if (!is.null(input$login)) {
             if (input$login > 0) {
                 Username <- isolate(input$userName)
                 Password <- isolate(input$passwd)
-                token <- verify_passwd(state, Username, Password)
+                auth = verify_passwd(state, Username, Password)
+                token <- auth[[1]]
                 
                 if(token != ""){
                   state$user$auth_token <- token
                   state$user$is_logged_in <- TRUE
                   state$user$username <- Username
-                  
+                  state$user$allow_write <- auth[[2]]
                 }
             else{
               shinyjs::toggle(id = "nomatch", anim = TRUE, time = 1, animType = "fade")
@@ -84,9 +76,13 @@ verify_passwd <- function(state, Username, Password){
   if(! Username %in% names(users)){
     return("")
   }
-  if(Password != users[[Username]]){
+  if(Password != users[[Username]]$password){
     return("")
   }
-  return(as.character(round(runif(1, 0, 1e6))))
+  allow_write = users[[Username]]$allow_write
+  if(is.na(allow_write) || is.null(allow_write))
+    stop("allow_write must be defined for each user")
+  
+  return(list(as.character(round(runif(1, 0, 1e6))), allow_write))
   
 }

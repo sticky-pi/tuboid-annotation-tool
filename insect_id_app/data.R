@@ -77,24 +77,26 @@ get_all_image_urls_for_tuboid <- function(state, tuboid_dir){
 }
 
 add_new_annotation <- function(state, input){
-  d =  data.table(tuboid_id=state$user$current_tuboid_id , 
-                   user=state$user$username , 
-                   type=state$choice$type,
-                   order=state$choice$order,
-                   family=state$choice$family,
-                   genus=state$choice$genus,
-                   species=state$choice$species,
-                   extra=state$choice$extra,
-                   confidence=state$choice$confidence,
-                   notes = state$choice$notes,
-                   datetime=Sys.time())
-  root_dir <- state$config$DATA_ROOT_DIR
-  if(!dir.exists(root_dir))
-    stop(sprintf("root dir %s does not exist", root_dir))
-  db_path <- file.path(root_dir, 'database.db')
-  con <- dbConnect(RSQLite::SQLite(), db_path)
-  on.exit(dbDisconnect(con))
-  dbAppendTable(con, 'ANNOTATIONS', d)
-  state$updaters$db_fetch_time <- Sys.time()
+  if(state$user$allow_write == TRUE){
+    d =  data.table(tuboid_id=state$user$current_tuboid_id , 
+                     user=state$user$username , 
+                     type=state$choice$type,
+                     order=state$choice$order,
+                     family=state$choice$family,
+                     genus=state$choice$genus,
+                     species=state$choice$species,
+                     extra=state$choice$extra,
+                     confidence=state$choice$confidence,
+                     notes = state$choice$notes,
+                     datetime=Sys.time())
+    root_dir <- state$config$DATA_ROOT_DIR
+    if(!dir.exists(root_dir))
+      stop(sprintf("root dir %s does not exist", root_dir))
+    db_path <- file.path(root_dir, 'database.db')
+    con <- dbConnect(RSQLite::SQLite(), db_path)
+    on.exit(dbDisconnect(con))
+    dbAppendTable(con, 'ANNOTATIONS', d)
+    state$updaters$db_fetch_time <- Sys.time()
+  }
   change_page(state$user$next_tuboid_url)
 }

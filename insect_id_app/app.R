@@ -96,7 +96,9 @@ server <- function(input, output, session) {
   )
   
   observeEvent(input$button_submit, {
-    add_new_annotation(state, input)})
+    
+    add_new_annotation(state, input)
+    })
   
   observeEvent(input$button_skip, {change_page(state$user$next_tuboid_url)})
   
@@ -107,7 +109,11 @@ server <- function(input, output, session) {
   }, levels)
   
   output$button_submit <- renderUI({
-    actionButton("button_submit", "Submit")
+    if(state$user$allow_write)
+      actionButton("button_submit", "Submit")
+    
+    else
+      actionButton("button_skip", "READ-ONLY")
   })
   
   output$button_skip <- renderUI({
