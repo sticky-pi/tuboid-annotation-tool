@@ -26,7 +26,7 @@ python pull_taxonomy.py /tmp/taxonomy.json
 s3cmd put /tmp/taxonomy.json s3://${BUCKET_NAME} && rm /tmp/taxonomy.json 
 ```
 
-1. Put all the files, recusively
+1. Put all the files, recursively
 ```
 s3cmd sync ${TUBOID_DATA_DIR}/ s3://${BUCKET_NAME}
 ```
