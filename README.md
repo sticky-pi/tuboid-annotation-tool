@@ -71,3 +71,15 @@ docker build --build-arg SHINY_UID=${SHINY_UID} .  --tag tuboid-annotation-tool:
 docker run --rm  --publish $PORT:80 --name tuboid-annotation-tool --env DATA_ROOT_DIR=/opt/data_root_dir  --env S3_BUCKET=${BUCKET_NAME} --volume ${LOCAL_VOLUME}:/opt/data_root_dir -d  tuboid-annotation-tool:$VERSION
 ```
 
+
+## send the annotated tuboid on the production bucket
+
+```
+DEST_S3_PREFIX=s3://sticky-pi-api-prod/ml/insect-tuboid-classifier/data
+s3cmd put --force database.db $DEST_S3_PREFIX/database.db
+for i in $(sqlite3 database.db "SELECT tuboid_id from annotations;");
+do
+  s3cmd cp s3://tuboid-annotation-data/"${i%.*}"/$i/ $DEST_S3_PREFIX/"${i%.*}"/$i/ --recursive;
+done
+```
+
