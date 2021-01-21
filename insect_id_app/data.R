@@ -16,7 +16,9 @@ get_next_to_annotate <- function(state, input){
 
 get_s3_url <- function(bucket, file, duration=3600){
   s3_path = sprintf('s3://%s/%s', bucket, file)
-  link = system2('s3cmd', args=list('signurl', s3_path, sprintf('+%i', duration)), stdout=TRUE)
+  expiration_time = (1 + (as.integer(Sys.time()) + duration) %/% 3600) * 3600
+  
+  link = system2('s3cmd', args=list('signurl', s3_path, sprintf('%i', expiration_time)), stdout=TRUE)
 }
 tuboids_dt <- function(state, input){
   
