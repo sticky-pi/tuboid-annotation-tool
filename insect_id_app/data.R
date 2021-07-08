@@ -36,7 +36,17 @@ tuboids_dt <- function(state, input){
 candidates_dt <- function(state, input){
   bucket <- state$config$S3_BUCKET
   url <- get_s3_url(bucket, 'candidate_labels.csv')
-  dt <- data.table::fread(url)
+  dt <- NULL
+  tryCatch({dt <<- dt <- data.table::fread(url)},
+           error = function(e) e)
+  if(is.null(dt))
+    dt <- data.table::data.table(tuboid_id = character(0),
+                      type = character(0),
+                      order = character(0),
+                      family = character(0),
+                      genus = character(0),
+                      species = character(0))
+  
   setkey(dt, tuboid_id)
   dt
 }

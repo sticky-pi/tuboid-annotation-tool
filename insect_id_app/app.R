@@ -67,6 +67,7 @@ server <- function(input, output, session) {
     
     candidates_dt = get_comp_prop(state, candidates_dt)
     candidate = candidates_dt[tuboid_id == state$user$current_tuboid_id,]
+    
     preselected <- NULL
     if(nrow(candidate) == 1)
       if(isTruthy(candidate[[level]]))
