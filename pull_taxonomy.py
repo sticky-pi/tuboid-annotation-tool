@@ -5,8 +5,6 @@ from ete3 import NCBITaxa
 
 if __name__ == "__main__":
     OUTFILE = sys.argv[1]
-
-    assert os.path.basename(OUTFILE) != b'taxonomy.json', os.path.basename(OUTFILE)
     assert os.path.isdir(os.path.dirname(OUTFILE))
 
     ncbi = NCBITaxa()

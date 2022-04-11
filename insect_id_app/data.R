@@ -1,5 +1,9 @@
+CACHE <- cachem::cache_mem(max_age = 300)
+
 split_path <- function(x) if (dirname(x)==x) x else c(basename(x),split_path(dirname(x)))
 
+
+#perf OK
 get_next_to_annotate <- function(state, input){
   ann_dt <- get_comp_prop(state, annotation_dt)
   tub_dt <- get_comp_prop(state, tuboids_dt)
@@ -14,11 +18,17 @@ get_next_to_annotate <- function(state, input){
   sample(n_dt[,tuboid_id], 1)
 }
 
-get_s3_url <- function(bucket, file, duration=3600){
+
+#perf OK
+wrapped_get_s3_url <- function(bucket, file, duration=3600){
   s3_path = sprintf('s3://%s/%s', bucket, file)
   expiration_time = (1 + (as.integer(Sys.time()) + duration) %/% 3600) * 3600
   link = system2('s3cmd', args=list('signurl', s3_path, sprintf('%i', expiration_time)), stdout=TRUE)
+  link
 }
+
+get_s3_url <- memoise(wrapped_get_s3_url, cache=CACHE)
+
 
 tuboids_dt <- function(state, input){
 
@@ -26,32 +36,41 @@ tuboids_dt <- function(state, input){
    tuboid_id: [08038ade.2020-06-24_22-00-00.2020-07-01_12-00-00.0000, ...]
    tuboid_dir: [08038ade.2020-06-24_22-00-00.2020-07-01_12-00-00/08038ade.2020-06-24_22-00-00.2020-07-01_12-00-00.0000, ...]
   "
+
+
+
   bucket <- state$config$S3_BUCKET
   url <- get_s3_url(bucket, 'index.csv')
   dt <- data.table::fread(url)
   setkey(dt, tuboid_id)
+
   dt
 }
 
 candidates_dt <- function(state, input){
+
   bucket <- state$config$S3_BUCKET
   url <- get_s3_url(bucket, 'candidate_labels.csv')
   dt <- NULL
   tryCatch({dt <<- dt <- data.table::fread(url)},
            error = function(e) e)
-  if(is.null(dt))
+
+  if(is.null(dt)){
     dt <- data.table::data.table(tuboid_id = character(0),
                       type = character(0),
                       order = character(0),
                       family = character(0),
                       genus = character(0),
                       species = character(0))
-
+    message("Creating empty candidate dt")
+  }
   setkey(dt, tuboid_id)
+
   dt
 }
 
 annotation_dt <- function(state, input){
+
   t <- state$updaters$db_fetch_time
   root_dir <- state$config$DATA_ROOT_DIR
   if(!dir.exists(root_dir))
@@ -82,10 +101,10 @@ annotation_dt <- function(state, input){
   dt
 }
 
-get_all_image_urls_for_tuboid <- function(state, tuboid_dir){
-  bucket <- state$config$S3_BUCKET
-  if(!shiny::isTruthy(tuboid_dir))
-    return(NULL)
+
+
+wrapped_mem_get_all_image_urls_for_tuboid <- function(bucket, tuboid_dir){
+
   context_image <- get_s3_url(bucket, paste(tuboid_dir, 'context.jpg', sep='/'))
   tuboid_image <- get_s3_url(bucket, paste( tuboid_dir, 'tuboid.jpg', sep='/'))
   metadata_url <- get_s3_url(bucket, paste( tuboid_dir, 'metadata.txt', sep='/'))
@@ -93,8 +112,22 @@ get_all_image_urls_for_tuboid <- function(state, tuboid_dir){
   setnames(metadata, c("image_id", "x", "y", "scale"))
   metadata[, length := 224 / scale ]
   # path in www (to be served) www is mapped to `tuboid_dir` through symlink
-  list(tuboid = tuboid_image, context = context_image, metadata = metadata)
+  l <- list(tuboid = tuboid_image, context = context_image, metadata = metadata)
+
 }
+
+mem_get_all_image_urls_for_tuboid <- memoise(wrapped_mem_get_all_image_urls_for_tuboid, cache = CACHE)
+
+get_all_image_urls_for_tuboid <- function(state, tuboid_dir){
+
+  bucket <- state$config$S3_BUCKET
+  if(!shiny::isTruthy(tuboid_dir))
+    return(NULL)
+  l <- mem_get_all_image_urls_for_tuboid(bucket, tuboid_dir)
+
+  l
+}
+
 
 add_new_annotation <- function(state, input){
   if(state$user$allow_write == TRUE){

@@ -12,6 +12,7 @@ $(document).on("keyup", function(e) {
     div(id = "loginpage",
      style = "width: 500px; max-width: 100%; margin: 0 auto; padding: 20px;",
     tags$script(js),
+    useShinyjs(),
     wellPanel(
      tags$h2("LOG IN", class = "text-center", style = "padding-top: 0;color:#333; font-weight:600;"),
      textInput("userName", placeholder="Username", label = tagList(icon("user"), "Username")),
@@ -62,6 +63,7 @@ login_fun <- function(state, input){
                   state$user$allow_write <- auth[[2]]
                 }
             else{
+                message("Wrong password");
               shinyjs::toggle(id = "nomatch", anim = TRUE, time = 1, animType = "fade")
               shinyjs::delay(3000, shinyjs::toggle(id = "nomatch", anim = TRUE, time = 1, animType = "fade"))
             }
